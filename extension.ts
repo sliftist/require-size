@@ -8,10 +8,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     let recentRunLength = 10 * 1000;
     let recentRuns: { start: number; end: number }[] = [];
-    function timeCode(code: () => void) {
+    async function timeCode(code: () => Promise<void>) {
         let runStart = Date.now();
         try {
-            code();
+            await code();
         } catch (e) {
             (vscode.window.showInformationMessage(`Parse error ${e.stack}!`));
         } finally {
@@ -102,11 +102,15 @@ export function onUpdatedAST(updatedCallback: UpdatedAST) {
 type DecorationIntersection = (
     Omit<vscode.DecorationRenderOptions & vscode.DecorationInstanceRenderOptions, "range">
     & ({ range: vscode.Range } | { node: Node })
+    & {
+        hoverMessage?: vscode.DecorationOptions["hoverMessage"];
+    }
 );
 function splitRenderOptions(intersection: DecorationIntersection): {
     options: vscode.DecorationRenderOptions;
     instance: vscode.DecorationInstanceRenderOptions;
     range: vscode.Range;
+    hoverMessage?: vscode.DecorationOptions["hoverMessage"];
 } {
     if ("node" in intersection) {
         let { node, ...remaining } = intersection;
@@ -123,7 +127,8 @@ function splitRenderOptions(intersection: DecorationIntersection): {
             before,
             after
         },
-        range: intersection.range
+        range: intersection.range,
+        hoverMessage: intersection.hoverMessage,
     };
 }
 
@@ -191,14 +196,11 @@ export async function updateDecorations(
 
     let decMap: Map<string, {
         options: vscode.DecorationRenderOptions;
-        instances: {
-            instance: vscode.DecorationInstanceRenderOptions;
-            range: vscode.Range;
-        }[];
+        instances: vscode.DecorationOptions[];
     }> = new Map();
 
     for (let dec of decorations) {
-        let { options, instance, range } = splitRenderOptions(dec);
+        let { options, instance, range, hoverMessage } = splitRenderOptions(dec);
         let optionsJSON = JSON.stringify(options);
         let decObj = decMap.get(optionsJSON);
         if (!decObj) {
@@ -208,7 +210,11 @@ export async function updateDecorations(
             };
             decMap.set(optionsJSON, decObj);
         }
-        decObj.instances.push({ instance, range });
+        decObj.instances.push({
+            renderOptions: instance,
+            range,
+            hoverMessage: hoverMessage,
+        });
     }
 
     for (let [optionsJSON, dec] of currentDecorations) {
@@ -234,9 +240,7 @@ export type UpdatedAST = {
             ast: Program,
             doc: vscode.TextDocument,
             setDecoration: (
-                decoration:
-                    Omit<vscode.DecorationRenderOptions & vscode.DecorationInstanceRenderOptions, "range">
-                    & ({ range: vscode.Range } | { node: Node })
+                decoration: DecorationIntersection
             ) => void,
             traverse: (
                 config: {
@@ -252,4 +256,4 @@ export type UpdatedAST = {
 };
 
 
-import "./decorationExample1";
+import "./decorationSetup";

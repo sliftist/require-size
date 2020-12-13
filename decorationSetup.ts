@@ -41,7 +41,7 @@ function getRequireResolve(): (id: string, path: string) => Promise<string> {
     }
 
     async function createSocket() {
-        let proc = child_process.execFile("node", [requireHelperPath], { encoding: "binary" });
+        let proc = child_process.spawn("node", [requireHelperPath], {});
         proc.on("error", e => {
             debugger;
             (vscode.window.showInformationMessage(`Process error ${e.stack}!`));

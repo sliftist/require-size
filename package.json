@@ -1,8 +1,8 @@
 {
-	"name": "ts-extension-template",
+	"name": "require-size",
 	"displayName": "",
 	"description": "",
-	"repository": "git@github.com:sliftist/ts-extension-template.git",
+	"repository": "git@github.com:sliftist/require-size.git",
 	"main": "./dist/extension.js",
 	"files": [
 		"./dist/extension.js"
@@ -43,8 +43,10 @@
 	"dependencies": {
 		"@types/fs-extra": "^9.0.4",
 		"builtin-modules": "^3.1.0",
+		"close-parser": "^0.0.10",
 		"fs-extra": "^9.0.1",
 		"pretty-bytes": "^5.4.1",
+		"raw-loader": "^4.0.2",
 		"vsce": "^1.77.0"
 	}
 }

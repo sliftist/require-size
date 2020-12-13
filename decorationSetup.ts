@@ -180,7 +180,7 @@ function getImports(ast: Node, allNodes: Node[], fullFile: string): {
                     importNodes.push({
                         importSpec: node.source.value as string,
                         node,
-                        unused: node.specifiers.length === 0 || !node.specifiers.some(x => usedIdentifiers.has(x.local)),
+                        unused: node.specifiers.length > 0 && !node.specifiers.some(x => usedIdentifiers.has(x.local)),
                     });
                 }
             }

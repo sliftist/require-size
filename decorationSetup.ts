@@ -232,21 +232,26 @@ function parseFile(filePath: string): { value: Promise<FileParseObj>, invalidate
                 return;
             }
             state = "pending";
-            let promise = parseFileInternal(filePath);
-            (promise.then(obj => {
-                if (state === "pendingInvalidate") {
+            let promise = (async () => {
+                // Delay changes a bit more.
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                try {
+                    return await parseFileInternal(filePath);
+                } finally {
+                    if ((state as any) === "pendingInvalidate") {
+                        state = "loaded";
+                        invalidate();
+                    }
                     state = "loaded";
-                    invalidate();
-                }
-                state = "loaded";
 
-                let users = viewReverseDependencies.get(filePath);
-                if (users) {
-                    for (let user of users) {
-                        triggerDecorationChange(user);
+                    let users = viewReverseDependencies.get(filePath);
+                    if (users) {
+                        for (let user of users) {
+                            triggerDecorationChange(user);
+                        }
                     }
                 }
-            }));
+            })();
             fileParseCache.set(filePath, { value: promise, invalidate });
         }
         invalidate();

@@ -9,7 +9,7 @@ import * as prettyBytes from "pretty-bytes";
 import * as builtinModules from "builtin-modules";
 import * as child_process from "child_process";
 import { parseClosed } from "close-parser/parseClosed";
-import * as net from "net";
+import "net";
 import * as fs from "fs";
 import * as vscode from "vscode";
 import * as os from "os";
@@ -180,7 +180,7 @@ function getImports(ast: Node, allNodes: Node[], fullFile: string): {
                     importNodes.push({
                         importSpec: node.source.value as string,
                         node,
-                        unused: !node.specifiers.some(x => usedIdentifiers.has(x.local)),
+                        unused: node.specifiers.length === 0 || !node.specifiers.some(x => usedIdentifiers.has(x.local)),
                     });
                 }
             }

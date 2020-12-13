@@ -12,10 +12,10 @@ import { parseClosed } from "close-parser/parseClosed";
 import * as net from "net";
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { isFunction } from "util";
+import * as os from "os";
 
 const requireHelperText = require("raw-loader!./requireHelper.js").default;
-fs.writeFileSync("./requireHelper.js", requireHelperText);
+fs.writeFileSync(os.homedir() + "/requireHelper.js", requireHelperText);
 
 let builtinModulesSet = new Set(builtinModules);
 
@@ -40,7 +40,7 @@ function getRequireResolve(): (id: string, path: string) => Promise<string> {
     }
 
     async function createSocket() {
-        let proc = child_process.execFile("node", ["./requireHelper.js"], { encoding: "binary" });
+        let proc = child_process.execFile("node", [os.homedir() + "/requireHelper.js"], { encoding: "binary" });
         proc.on("error", e => {
             debugger;
             (vscode.window.showInformationMessage(`Process error ${e.stack}!`));

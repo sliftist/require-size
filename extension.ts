@@ -38,7 +38,7 @@ function updateUsageFraction() {
         lastTime = recentRuns[recentRuns.length - 1].end - recentRuns[recentRuns.length - 1].start;
     }
 
-    status.text = `Closer ${sum}ms/${recentRunLength}ms, ${recentRuns.length}, Last ${lastTime}ms`;
+    status.text = `Require-size ${sum}ms/${recentRunLength}ms, ${recentRuns.length}, Last ${lastTime}ms`;
     status.show();
 }
 

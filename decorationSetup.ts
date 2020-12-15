@@ -577,13 +577,13 @@ onUpdatedAST(async ({ setDecoration, traverse, doc, ast, }) => {
         }
 
         if (costsObj.readTime > 1000) {
-            message += ` File read took ${costsObj.readTime}ms`;
+            message += ` (slow file read, ${costsObj.readTime}ms)`;
         }
         if (costsObj.parseTime > 1000) {
-            message += ` File parse took ${costsObj.parseTime}ms`;
+            message += ` (slow file parse, ${costsObj.parseTime}ms)`;
         }
-        hoverMessage += ` File read took ${costsObj.readTime}ms`;
-        hoverMessage += ` File parse took ${costsObj.parseTime}ms`;
+        hoverMessage += `, file read took ${costsObj.readTime}ms`;
+        hoverMessage += `, file parse took ${costsObj.parseTime}ms`;
 
         if (costsObj.cyclicWithCurFile) {
             message += ` + cyclic`;

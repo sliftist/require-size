@@ -14,6 +14,27 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import * as os from "os";
 
+//todonext
+// Ah, so... taking every file by itself, finding the full recursive cost without deduping,
+//  we can arrange them from smallest to largest. And then remove everything that takes up less
+//  than 25% of the total size (or just take the one just above 25%, or any percent really...).
+//  Then we look at this, and decide if it is okay. If it is... we whitelist it, which just means
+//  that whenever anything imports it pretends as if it didn't.
+//  - Hmm... maybe we should sort by unique cost instead? Or... amortized cost? That becomes tricky.
+//      Maybe for every import under a module, we find the fewest files we can remove (assuming we also
+//      remove the module) that will remove that import. AND, we don't consider removals that would also
+//      remove our module. Or, or maybe the amount of files OR specific imports we can remove? Hmm... it's tricky,
+//      as our module will be in the import tree multiple times anyway... ugh, idk.
+//      - So amoritized and unique cost are hard, so maybe don't do them.
+//  But anyway, so some removing some files won't reduce the overall size by too much, as they will only
+//      include shared dependencies.
+//  OH! We could just find the file which if we replaced it with nothing would reduce the file size by the most?
+//      So... our root files will come up first, and we will have to filter through those... ugh... but it will mostly
+//      be root imports... Well, hopefully at some point we will get through those, and then we can get onto the rest?
+//      - And maybe after whitelisting an import, we also replace it, so we don't have to deal with things constantly looping
+//          back to the root with cyclic dependencies?
+
+
 const requireHelperText = require("raw-loader!./requireHelper.js").default;
 const requireHelperPath = os.tmpdir() + "/requireHelper.js";
 fs.writeFileSync(requireHelperPath, requireHelperText);
@@ -102,11 +123,20 @@ function getRequireResolve(): (id: string, path: string) => Promise<string> {
     };
 }
 
-async function getResolvedPath(importSpec: string, userFileName: string): Promise<{
-    result: string
-} | {
-    error: string
-}> {
+type ResolvedObj = { result: string } | { error: string };
+
+// JSON.stringify({ importSpec, userFileName }) => string
+let resolvedCache: Map<string, Promise<ResolvedObj>> = new Map();
+async function getResolvedPath(importSpec: string, userFileName: string): Promise<ResolvedObj> {
+    let hash = JSON.stringify({ importSpec, userFileName });
+    let value = resolvedCache.get(hash);
+    if (!value) {
+        value = getResolvedPathInternal(importSpec, userFileName);
+        resolvedCache.set(hash, value);
+    }
+    return value;
+}
+async function getResolvedPathInternal(importSpec: string, userFileName: string): Promise<ResolvedObj> {
     let error = "";
     for (let extension of [""].concat(extensions)) {
         try {
@@ -233,8 +263,6 @@ function parseFile(filePath: string): { value: Promise<FileParseObj>, invalidate
             }
             state = "pending";
             let promise = (async () => {
-                // Delay changes a bit more.
-                await new Promise(resolve => setTimeout(resolve, 2500));
                 try {
                     return await parseFileInternal(filePath);
                 } finally {
